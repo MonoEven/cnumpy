@@ -68,7 +68,10 @@ if retained != baseline
 The complete [quickstart example](examples/ahk/quickstart.ahk) also demonstrates
 a native shape error and prints deterministic output. The
 [callback example](examples/ahk/callbacks.ahk) covers the high-level callback
-facade and exception propagation.
+facade and exception propagation. For end-to-end applications, use the
+[practical examples](examples/README.md): CSV sales analysis, ordinary
+least-squares regression, signal smoothing and spike localization, and a
+preallocated C pipeline.
 
 ## Build
 
@@ -91,6 +94,7 @@ Set `$Ahk` to a 64-bit AutoHotkey v2 executable:
 $Ahk = 'C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe'
 & $Ahk /ErrorStdOut examples\ahk\quickstart.ahk
 & $Ahk /ErrorStdOut examples\ahk\callbacks.ahk
+.\examples\verify_ahk.ps1 -AhkPath $Ahk
 
 python -B -W error::ResourceWarning -m unittest discover -s benchmark\tests -v
 & $Ahk /ErrorStdOut=UTF-8 ahk\numpy.test.ahk
@@ -106,6 +110,7 @@ qualification metadata, and report interpretation.
 ## Documentation
 
 - [Getting started with AutoHotkey v2](docs/getting-started.md)
+- [Practical, complete examples](examples/README.md)
 - [Bulk callbacks from AutoHotkey and C](docs/guides/bulk-callbacks.md)
 - [NumPy 1.25 compatibility and migration](docs/compatibility/numpy-1.25.md)
 - [Final performance and behavior evidence](docs/compatibility/2026-08-04-performance-behavior-convergence-baseline.md)
