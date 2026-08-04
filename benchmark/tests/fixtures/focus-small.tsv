@@ -1,0 +1,9 @@
+id	category	operation	dtype	size	rows	cols	axis
+bridge/property_call	bridge	property_call	f64	1	0	0	-1
+zeros/f64/8	creation	zeros	f64	8	0	0	-1
+argmax/f64/8	reduction	argmax	f64	8	0	0	-1
+cumsum/f64/8	reduction	cumsum	f64	8	0	0	-1
+argsort/f64/8	sorting	argsort	f64	8	0	0	-1
+flatten/f64/8	shape	flatten	f64	8	0	0	-1
+reshape/f64/8	shape	reshape	f64	8	0	0	-1
+concatenate/f64/2x2/axis0	shape	concatenate	f64	4	2	2	0

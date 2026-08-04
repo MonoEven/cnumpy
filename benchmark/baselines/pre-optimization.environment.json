@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "run_id": "20260719T211301.197264Z",
+  "started_at_utc": "2026-07-19T21:13:01.197264+00:00",
+  "profile": "focus",
+  "size_scale": "native",
+  "selection": {
+    "case_ids": [
+      "argmax/f64/1000",
+      "argmax/f64/1000000",
+      "argsort/f64/1000",
+      "argsort/f64/1000000",
+      "bridge/property_call",
+      "concatenate/f64/512x512/axis0",
+      "copy/f64/1000",
+      "copy/f64/1000000",
+      "cumsum/f64/1000",
+      "cumsum/f64/1000000",
+      "flatten/f64/1000",
+      "flatten/f64/1000000",
+      "max/f64/1000",
+      "max/f64/1000000",
+      "mean/f64/1000",
+      "mean/f64/1000000",
+      "min/f64/1000",
+      "min/f64/1000000",
+      "prod/f64/1000",
+      "prod/f64/1000000",
+      "reshape/f64/1000",
+      "reshape/f64/1000000",
+      "sort/f64/1000",
+      "sort/f64/1000000",
+      "std/f64/1000",
+      "std/f64/1000000",
+      "sum/f64/1000",
+      "sum/f64/1000000",
+      "zeros/f64/1000",
+      "zeros/f64/1000000"
+    ],
+    "categories": []
+  },
+  "protocol": {
+    "warmups": 5,
+    "sample_count": 15,
+    "target_sample_ms": 20.0,
+    "seed": 12345,
+    "headline_includes_dllcall_overhead": true
+  },
+  "runtime_order": [
+    "numpy",
+    "cnumpy"
+  ],
+  "host": {
+    "system": "Windows",
+    "release": "10",
+    "version": "10.0.29617",
+    "machine": "AMD64",
+    "platform_processor": "Intel64 Family 6 Model 154 Stepping 3, GenuineIntel",
+    "processor_identifier": "Intel64 Family 6 Model 154 Stepping 3, GenuineIntel",
+    "logical_processor_count": 20,
+    "python_process_architecture": "64bit"
+  },
+  "paths": {
+    "project_root": "D:\\Tech\\Projects\\Autohotkey\\Lib\\visual_studio\\tasks\\2026-07-19-cnumpy-foundation",
+    "project": "D:\\Tech\\Projects\\Autohotkey\\Lib\\visual_studio\\tasks\\2026-07-19-cnumpy-foundation\\src\\cnumpy_ahk.vcxproj",
+    "python": "F:\\Python\\Python310\\python.exe",
+    "ahk": "D:\\Tech\\Projects\\Autohotkey\\AutoHotkey64.exe",
+    "msbuild": null,
+    "dll": "D:\\Tech\\Projects\\Autohotkey\\Lib\\visual_studio\\tasks\\2026-07-19-cnumpy-foundation\\build\\x64\\Release\\cnumpy_ahk.dll"
+  },
+  "artifacts": {
+    "dll": {
+      "sha256": "e6ec7cc150412ec31698053351f43fd4afdb90470a7e6ff27d4b22f1ce8f836a",
+      "size_bytes": 433664,
+      "modified_at_utc": "2026-07-19T21:04:16.024179+00:00"
+    }
+  },
+  "runtimes": {
+    "numpy": {
+      "python_version": "3.10.11",
+      "numpy_version": "1.25.0",
+      "timer": "perf_counter_ns",
+      "timer_resolution_ns": 100.0,
+      "warmups": 5,
+      "sample_count": 15,
+      "target_sample_ns": 20000000.0,
+      "seed": 12345
+    },
+    "cnumpy": {
+      "ahk_version": "2.1-alpha.30",
+      "dll_version": "1.21.0-cnumpy",
+      "dll_path": "D:\\Tech\\Projects\\Autohotkey\\Lib\\visual_studio\\tasks\\2026-07-19-cnumpy-foundation\\build\\x64\\Release\\cnumpy_ahk.dll",
+      "timer": "QueryPerformanceCounter",
+      "timer_frequency": 10000000,
+      "warmups": 5,
+      "sample_count": 15,
+      "target_sample_ns": 20000000,
+      "seed": 12345
+    }
+  },
+  "commands": {
+    "numpy": [
+      "F:\\Python\\Python310\\python.exe",
+      "-B",
+      "D:\\Tech\\Projects\\Autohotkey\\Lib\\visual_studio\\tasks\\2026-07-19-cnumpy-foundation\\benchmark\\bench_numpy.py",
+      "--output",
+      "D:\\Tech\\Projects\\Autohotkey\\Lib\\visual_studio\\tasks\\2026-07-19-cnumpy-foundation\\benchmark\\results\\20260719T211301.197264Z\\numpy.json",
+      "--jobs",
+      "D:\\Tech\\Projects\\Autohotkey\\Lib\\visual_studio\\tasks\\2026-07-19-cnumpy-foundation\\benchmark\\results\\20260719T211301.197264Z\\jobs.tsv",
+      "--warmups",
+      "5",
+      "--samples",
+      "15",
+      "--target-sample-ms",
+      "20",
+      "--seed",
+      "12345"
+    ],
+    "cnumpy": [
+      "D:\\Tech\\Projects\\Autohotkey\\AutoHotkey64.exe",
+      "/ErrorStdOut=UTF-8",
+      "D:\\Tech\\Projects\\Autohotkey\\Lib\\visual_studio\\tasks\\2026-07-19-cnumpy-foundation\\benchmark\\bench_cnumpy.ahk",
+      "--output",
+      "D:\\Tech\\Projects\\Autohotkey\\Lib\\visual_studio\\tasks\\2026-07-19-cnumpy-foundation\\benchmark\\results\\20260719T211301.197264Z\\cnumpy.json",
+      "--dll",
+      "D:\\Tech\\Projects\\Autohotkey\\Lib\\visual_studio\\tasks\\2026-07-19-cnumpy-foundation\\build\\x64\\Release\\cnumpy_ahk.dll",
+      "--jobs",
+      "D:\\Tech\\Projects\\Autohotkey\\Lib\\visual_studio\\tasks\\2026-07-19-cnumpy-foundation\\benchmark\\results\\20260719T211301.197264Z\\jobs.tsv",
+      "--warmups",
+      "5",
+      "--samples",
+      "15",
+      "--target-sample-ms",
+      "20",
+      "--seed",
+      "12345"
+    ]
+  },
+  "build": {
+    "requested": false,
+    "configuration": "Release",
+    "platform": "x64",
+    "compiler_settings": {
+      "WarningLevel": "Level3",
+      "FunctionLevelLinking": "true",
+      "IntrinsicFunctions": "true",
+      "SDLCheck": "true",
+      "PreprocessorDefinitions": "NDEBUG;_WINDOWS;_USRDLL;CNUMPY_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)",
+      "AdditionalIncludeDirectories": "$(ProjectDir)..\\include;%(AdditionalIncludeDirectories)",
+      "ConformanceMode": "true",
+      "CompileAs": "CompileAsC",
+      "Optimization": "MaxSpeed",
+      "FloatingPointModel": "Fast",
+      "EnableEnhancedInstructionSet": "StreamingSIMDExtensions2"
+    }
+  },
+  "completed_at_utc": "2026-07-19T21:13:58.726044+00:00"
+}

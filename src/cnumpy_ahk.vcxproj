@@ -1,0 +1,152 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{B8C4D2E3-6F5A-4B7C-9D0E-1F2A3B4C5D6E}</ProjectGuid>
+    <RootNamespace>cnumpy_ahk</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="Shared" />
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <OutDir>$(ProjectDir)..\build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)..\build\$(Platform)\$(Configuration)\obj\</IntDir>
+    <TargetName>cnumpy_ahk</TargetName>
+    <VcpkgEnabled>false</VcpkgEnabled>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;_USRDLL;CNUMPY_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ConformanceMode>true</ConformanceMode>
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_WINDOWS;_USRDLL;CNUMPY_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ConformanceMode>true</ConformanceMode>
+      <CompileAs>CompileAsC</CompileAs>
+      <Optimization>MaxSpeed</Optimization>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="cnumpy_ahk.c" />
+    <ClCompile Include="cnumpy_ahk_batch.c" />
+    <ClCompile Include="core.c" />
+    <ClCompile Include="array.c" />
+    <ClCompile Include="broadcast.c" />
+    <ClCompile Include="math_ops.c" />
+    <ClCompile Include="simd_ops.c" />
+    <ClCompile Include="simd_dispatch.c" />
+    <ClCompile Include="simd_avx2.c">
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+    </ClCompile>
+    <ClCompile Include="gemm.c" />
+    <ClCompile Include="gemm_sse2.c" />
+    <ClCompile Include="gemm_avx2.c">
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+    </ClCompile>
+    <ClCompile Include="into_ops.c" />
+    <ClCompile Include="shape.c" />
+    <ClCompile Include="reduce.c" />
+    <ClCompile Include="indexing.c" />
+    <ClCompile Include="linalg.c" />
+    <ClCompile Include="eigh.c" />
+    <ClCompile Include="einsum.c" />
+    <ClCompile Include="eig_general.c" />
+    <ClCompile Include="svd.c" />
+    <ClCompile Include="sort.c" />
+    <ClCompile Include="random.c" />
+    <ClCompile Include="stats.c" />
+    <ClCompile Include="deflate.c" />
+    <ClCompile Include="io.c" />
+    <ClCompile Include="polynomial.c" />
+    <ClCompile Include="fft.c" />
+    <ClCompile Include="setops.c" />
+    <ClCompile Include="extra.c" />
+    <ClCompile Include="charops.c" />
+    <ClCompile Include="special.c" />
+    <ClCompile Include="structured.c" />
+    <ClCompile Include="memmap.c" />
+    <ClCompile Include="window.c" />
+    <ClCompile Include="masked.c" />
+    <ClCompile Include="io_extra.c" />
+    <ClCompile Include="stride_tricks.c" />
+    <ClCompile Include="linalg_ext.c" />
+    <ClCompile Include="datetime.c" />
+    <ClCompile Include="advanced_ops.c" />
+    <ClCompile Include="typeconv.c" />
+    <ClCompile Include="array_ops.c" />
+    <ClCompile Include="math_extra.c" />
+    <ClCompile Include="numpy_ext.c" />
+    <ClCompile Include="random_ext.c" />
+    <ClCompile Include="fft_ext.c" />
+    <ClCompile Include="util_ext.c" />
+    <ClCompile Include="poly_ext.c" />
+    <ClCompile Include="final_ext.c" />
+    <ClCompile Include="poly_ext2.c" />
+    <ClCompile Include="array_ext.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\cnumpy\cnumpy.h" />
+    <ClInclude Include="..\include\cnumpy\cnumpy_ahk.h" />
+    <ClInclude Include="..\include\cnumpy\cnumpy_internal.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>
