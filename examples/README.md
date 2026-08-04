@@ -8,6 +8,25 @@ native allocation remains live.
 Run commands from the repository root. The included DLL is qualified for
 Windows x64, so use a 64-bit AutoHotkey v2 executable and an x64 C toolchain.
 
+## Run the complete application
+
+Double-click the root [main.ahk](../main.ahk) for an interactive sales report.
+Success and failure are displayed in a Windows dialog, so the program does not
+depend on stdout or stderr handles supplied by a parent terminal.
+
+Automated callers must opt into the deterministic headless contract:
+
+```powershell
+$Ahk = 'C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe'
+& $Ahk /ErrorStdOut=UTF-8 .\main.ahk --headless
+& $Ahk /ErrorStdOut=UTF-8 .\main.ahk --headless `
+  'D:\data\orders.csv' 'D:\reports\order-profit.csv'
+```
+
+The default data is [sales.csv](data/sales.csv), and the default result is
+`build/examples/forum_sales_report.csv`. A failure returns exit code 1, exposes
+the original cnumpy exception, and does not create the requested output file.
+
 ## Run the AutoHotkey suite
 
 The verification script starts every AHK program as a separate process, checks
@@ -23,6 +42,8 @@ Replace the executable path with your AutoHotkey v2 x64 installation. A
 successful run ends with:
 
 ```text
+expected_root_missing_input_exit=1
+ERROR: Numpy.Loadtxt (cnp_loadtxt) failed with status -11: Cannot open file: ...
 expected_missing_input_exit=1
 ERROR: Numpy.Loadtxt (cnp_loadtxt) failed with status -11: Cannot open file: ...
 ahk_example_contracts=passed

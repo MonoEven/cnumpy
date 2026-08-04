@@ -30,6 +30,22 @@ the same artifact.
 
 ## Quick start
 
+The root [main.ahk](main.ahk) is a complete sales-report application. Double-click
+it to process the bundled CSV and show the result or the original error in a
+Windows dialog; this mode does not require console stdout or stderr handles.
+For terminal automation, select the explicit headless interface:
+
+```powershell
+$Ahk = 'C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe'
+& $Ahk /ErrorStdOut=UTF-8 .\main.ahk --headless
+& $Ahk /ErrorStdOut=UTF-8 .\main.ahk --headless `
+  .\examples\data\sales.csv .\build\examples\custom-sales-report.csv
+```
+
+Headless failures preserve a nonzero process exit and write the real cnumpy
+exception to stderr. The two optional positional paths are input CSV and output
+CSV, in that order.
+
 Set the DLL path before the first library call, release every `NdArray`, and
 call `Numpy.Cleanup()` last:
 

@@ -11,13 +11,14 @@ function Invoke-CheckedExample {
     param(
         [Parameter(Mandatory = $true)]
         [string]$Script,
+        [string[]]$Arguments = @(),
         [Parameter(Mandatory = $true)]
         [string[]]$ExpectedLines
     )
 
     $previousPreference = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
-    $captured = & $AhkPath /ErrorStdOut $Script 2>&1 | Out-String
+    $captured = & $AhkPath /ErrorStdOut=UTF-8 $Script @Arguments 2>&1 | Out-String
     $exitCode = $LASTEXITCODE
     $ErrorActionPreference = $previousPreference
     if ($exitCode -ne 0) {
@@ -30,6 +31,18 @@ function Invoke-CheckedExample {
     }
     Write-Output $captured.TrimEnd()
 }
+
+Invoke-CheckedExample `
+    -Script (Join-Path $repoRoot 'main.ahk') `
+    -Arguments @('--headless') `
+    -ExpectedLines @(
+        'orders=6',
+        'total_revenue=1695.00',
+        'total_profit=607.00',
+        'profit_margin=35.81%',
+        'best_order_id=105',
+        'retained_bytes=0'
+    )
 
 Invoke-CheckedExample `
     -Script (Join-Path $PSScriptRoot 'ahk\sales_report.ahk') `
@@ -69,6 +82,29 @@ $missingInput = Join-Path $outputRoot 'intentionally-missing.csv'
 if (Test-Path -LiteralPath $missingInput) {
     throw "Failure-test precondition violated: $missingInput exists"
 }
+$rootFailureOutput = Join-Path $outputRoot 'root-should-not-be-created.csv'
+if (Test-Path -LiteralPath $rootFailureOutput) {
+    throw "Failure-test precondition violated: $rootFailureOutput exists"
+}
+$previousPreference = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
+$rootFailure = & $AhkPath /ErrorStdOut=UTF-8 `
+    (Join-Path $repoRoot 'main.ahk') `
+    --headless $missingInput $rootFailureOutput 2>&1 | Out-String
+$rootFailureExitCode = $LASTEXITCODE
+$ErrorActionPreference = $previousPreference
+if ($rootFailureExitCode -eq 0) {
+    throw "Root example missing input unexpectedly succeeded`n$rootFailure"
+}
+if (-not $rootFailure.Contains('Numpy.Loadtxt')) {
+    throw "Root example did not expose Numpy.Loadtxt`n$rootFailure"
+}
+if (Test-Path -LiteralPath $rootFailureOutput) {
+    throw "Root example created output after a missing-input failure: $rootFailureOutput"
+}
+Write-Output "expected_root_missing_input_exit=$rootFailureExitCode"
+Write-Output $rootFailure.TrimEnd()
+
 $failureOutput = Join-Path $outputRoot 'should-not-be-created.csv'
 $previousPreference = $ErrorActionPreference
 $ErrorActionPreference = 'Continue'
@@ -87,6 +123,7 @@ Write-Output "expected_missing_input_exit=$failureExitCode"
 Write-Output $failure.TrimEnd()
 
 $expectedFiles = @(
+    @{ Path = Join-Path $outputRoot 'forum_sales_report.csv'; First = '101.00,240.00,90.00' },
     @{ Path = Join-Path $outputRoot 'sales_report.csv'; First = '101.00,240.00,90.00' },
     @{ Path = Join-Path $outputRoot 'linear_regression_predictions.csv'; First = '0.000000,2.600000,2.557143' },
     @{ Path = Join-Path $outputRoot 'signal_smoothing.csv'; First = '1.000000,11.000000,10.333333,0.666667' }
@@ -102,3 +139,4 @@ foreach ($expected in $expectedFiles) {
 }
 
 Write-Output 'ahk_example_contracts=passed'
+$global:LASTEXITCODE = 0
