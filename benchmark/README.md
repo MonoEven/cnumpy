@@ -64,6 +64,13 @@ python benchmark\benchmark.py --profile standard --size-scale smoke --warmups 1 
 
 `smoke` collapses repeated sizes to one 8-element vector or 2×2 matrix per operation. It verifies dispatch, schema, correctness, cleanup, and reporting; it is not a production performance result.
 
+The 2026-08-04
+[authoritative bilingual report](../docs/performance/2026-08-04-authoritative-performance-report.md)
+publishes the complete 459-case primary run, reversed-order control, 25-sample
+stability diagnostic, exact CSV evidence, behavior/lifecycle gates, and a
+host-scoped interpretation. Read its limitations before using any ratio as a
+deployment claim.
+
 ## Profiles
 
 | Profile | Cases | Intended use |
@@ -401,8 +408,9 @@ There are no skipped operations, mock results, silent path substitutions, bridge
 ## Verification
 
 ```powershell
-python -B -m unittest discover -s benchmark\tests -v
+$Python = 'F:\Python\Python310\python.exe' # Python 3.10.11 with NumPy 1.25.0
+& $Python -B -m unittest discover -s benchmark\tests -v
 D:\Tech\Projects\Autohotkey\AutoHotkey64.exe /ErrorStdOut=UTF-8 benchmark\benchmark_smoke.test.ahk
 D:\Tech\Projects\Autohotkey\AutoHotkey64.exe /ErrorStdOut=UTF-8 ahk\numpy.test.ahk
-python benchmark\benchmark.py --profile focus --size-scale smoke --warmups 1 --samples 3 --target-sample-ms 1
+& $Python benchmark\benchmark.py --profile focus --size-scale smoke --warmups 1 --samples 3 --target-sample-ms 1
 ```

@@ -92,20 +92,24 @@ Set `$Ahk` to a 64-bit AutoHotkey v2 executable:
 
 ```powershell
 $Ahk = 'C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe'
+$Python = 'F:\Python\Python310\python.exe' # Python 3.10.11 with NumPy 1.25.0
 & $Ahk /ErrorStdOut examples\ahk\quickstart.ahk
 & $Ahk /ErrorStdOut examples\ahk\callbacks.ahk
 .\examples\verify_ahk.ps1 -AhkPath $Ahk
 
-python -B -W error::ResourceWarning -m unittest discover -s benchmark\tests -v
+& $Python -B -W error::ResourceWarning -m unittest discover -s benchmark\tests -v
 & $Ahk /ErrorStdOut=UTF-8 ahk\numpy.test.ahk
 & $Ahk /ErrorStdOut=UTF-8 benchmark\benchmark_smoke.test.ahk
-python benchmark\benchmark.py --profile focus --size-scale smoke --warmups 1 --samples 3 --target-sample-ms 1
+& $Python benchmark\benchmark.py --profile focus --size-scale smoke --warmups 1 --samples 3 --target-sample-ms 1
 ```
 
 Use the full benchmark protocol before making performance claims; a smoke run
 checks the pipeline, not regression stability. See the
 [benchmark guide](benchmark/README.md) for profiles, timing boundaries,
-qualification metadata, and report interpretation.
+qualification metadata, and report interpretation. The host-scoped
+[bilingual performance report](docs/performance/2026-08-04-authoritative-performance-report.md)
+publishes all 459 row-level results, both runtime orders, the stability
+diagnostic, limitations, and optimization priorities.
 
 ## Documentation
 
@@ -114,6 +118,7 @@ qualification metadata, and report interpretation.
 - [Bulk callbacks from AutoHotkey and C](docs/guides/bulk-callbacks.md)
 - [NumPy 1.25 compatibility and migration](docs/compatibility/numpy-1.25.md)
 - [Final performance and behavior evidence](docs/compatibility/2026-08-04-performance-behavior-convergence-baseline.md)
+- [Authoritative bilingual performance report](docs/performance/2026-08-04-authoritative-performance-report.md)
 - [Public C API](include/cnumpy/cnumpy.h)
 - [AutoHotkey/bulk callback ABI](include/cnumpy/cnumpy_ahk.h)
 
