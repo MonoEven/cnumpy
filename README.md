@@ -148,3 +148,9 @@ diagnostic, limitations, and optimization priorities.
   C. They are not converted into empty arrays or substitute results.
 - Prefer v2 exports where a legacy sentinel or scalar return loses NumPy
   meaning. The compatibility guide lists each important migration boundary.
+
+## License
+
+cnumpy is available under the [MIT License](LICENSE). Copyright (c) 2026
+MonoEven. Third-party portions remain subject to the notices retained in their
+source files.
