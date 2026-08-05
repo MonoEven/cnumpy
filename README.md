@@ -138,6 +138,12 @@ diagnostic, limitations, and optimization priorities.
 - [Public C API](include/cnumpy/cnumpy.h)
 - [AutoHotkey/bulk callback ABI](include/cnumpy/cnumpy_ahk.h)
 
+## Friendly Links
+
+- [MonoEven/stdlib-ahk](https://github.com/MonoEven/stdlib-ahk)
+- [Linux.do](https://linux.do/)
+- [AutoHotkey Community Forum](https://www.autohotkey.com/boards/)
+
 ## Operating rules
 
 - Treat returned arrays as owned unless an API explicitly documents a borrowed
