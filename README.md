@@ -30,6 +30,13 @@ the same artifact.
 
 ## Quick start
 
+For a guided, chapter-by-chapter introduction in the style of the NumPy
+Quickstart, read the bilingual tutorial site:
+[English](https://monoeven.github.io/cnumpy/) ·
+[中文](https://monoeven.github.io/cnumpy/index.zh.html)
+(source in [tutorial/](tutorial/), every example output verified against the
+qualified DLL by [tutorial/verify_examples.ahk](tutorial/verify_examples.ahk)).
+
 The root [main.ahk](main.ahk) is a complete sales-report application. Double-click
 it to process the bundled CSV and show the result or the original error in a
 Windows dialog; this mode does not require console stdout or stderr handles.
@@ -129,6 +136,8 @@ diagnostic, limitations, and optimization priorities.
 
 ## Documentation
 
+- [Quickstart tutorial site, English / 中文](https://monoeven.github.io/cnumpy/)
+  (source: [tutorial/](tutorial/))
 - [Getting started with AutoHotkey v2](docs/getting-started.md)
 - [Practical, complete examples](examples/README.md)
 - [Bulk callbacks from AutoHotkey and C](docs/guides/bulk-callbacks.md)

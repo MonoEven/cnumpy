@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>cnumpy 快速入门 — AutoHotkey v2 中的 NumPy 风格数组</title>
+<meta name="description" content="仿照 NumPy 1.25 快速入门编写的 cnumpy 教程：原生 x64 数值数组库 + AutoHotkey v2 门面。">
+<link rel="stylesheet" href="assets/tutorial.css">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <p class="kicker">cnumpy · AutoHotkey v2 实战手册</p>
+    <h1>cnumpy<br><span class="thin">快速入门教程</span></h1>
+    <p class="deck">
+      在 AutoHotkey&nbsp;v2 中直接驱动具有 NumPy&nbsp;1.25 语义的原生 x64 数组。
+      本教程逐章对应经典的 <em>NumPy&nbsp;Quickstart</em>，每一个示例都针对
+      <code>ahk/numpy.ahk</code> 中的 <code>Numpy</code> 门面重新编写。
+    </p>
+    <div class="stamp">对标验证<br>NumPy 1.25.0<br>752/752 项声明</div>
+    <div class="lang-switch">
+      <a href="index.html" data-target="index.html" lang="en">EN</a>
+      <span>中文</span>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+
+<nav class="toc" aria-label="目录">
+  <p class="toc-title">目录</p>
+  <ol>
+    <li><a href="#before-you-start">开始之前</a></li>
+    <li><a href="#the-basics">基础</a>
+      <ol>
+        <li><a href="#an-example">一个例子</a></li>
+        <li><a href="#array-creation">创建数组</a></li>
+        <li><a href="#printing-arrays">打印数组</a></li>
+        <li><a href="#basic-operations">基本运算</a></li>
+        <li><a href="#universal-functions">通用函数</a></li>
+        <li><a href="#indexing-slicing">索引、切片与迭代</a></li>
+      </ol>
+    </li>
+    <li><a href="#shape-manipulation">形状操作</a>
+      <ol>
+        <li><a href="#changing-shape">改变形状</a></li>
+        <li><a href="#stacking">堆叠数组</a></li>
+        <li><a href="#splitting">拆分数组</a></li>
+      </ol>
+    </li>
+    <li><a href="#copies-and-views">副本与视图</a></li>
+    <li><a href="#broadcasting">广播</a></li>
+    <li><a href="#advanced-indexing">高级索引</a></li>
+    <li><a href="#linear-algebra">线性代数</a></li>
+    <li><a href="#random-numbers">随机数</a></li>
+    <li><a href="#callbacks">回调与向量化</a></li>
+    <li><a href="#ownership">所有权与清理</a></li>
+  </ol>
+</nav>
+
+<article>
+
+<!-- ================================================================ -->
+<section id="before-you-start">
+  <h2><span class="chapter-no">第 01 章</span><a class="anchor" href="#before-you-start">开始之前</a></h2>
+
+  <p>cnumpy 是一个原生的 Windows x64 DLL，提供公开的 C ABI 以及一个
+  AutoHotkey&nbsp;v2 门面。本教程中的一切都通过仓库里的两个文件运行：</p>
+
+  <table>
+    <tr><th>组件</th><th>路径</th></tr>
+    <tr><td>AutoHotkey 门面</td><td><code>ahk\numpy.ahk</code></td></tr>
+    <tr><td>合格发布 DLL</td><td><code>build\x64\Release\cnumpy_ahk.dll</code></td></tr>
+  </table>
+
+  <p>所有组件必须使用同一架构：Windows x64、<strong>64 位</strong>的
+  AutoHotkey&nbsp;v2 解释器（发布版以 2.1-alpha.30 x64 验证），以及 x64
+  版 DLL。请在第一次调用库之前设置 <code>Numpy.DllPath</code> ——
+  数组工厂方法会按需调用 <code>Numpy.Init()</code>，而 DLL
+  加载后再修改路径不会替换已加载的模块。</p>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">setup.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>#Requires AutoHotkey v2.0
+#Include ahk\numpy.ahk
+
+; 脚本位于仓库根目录时：
+Numpy.DllPath := A_ScriptDir "\build\x64\Release\cnumpy_ahk.dll"
+Numpy.Init()
+
+MsgBox "cnumpy " Numpy.Version()</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>cnumpy 1.21.0-cnumpy</code></pre></div>
+  </div>
+
+  <div class="warn-box">
+    <span class="label">契约</span>
+    <p>每个 <code>NdArray</code> 都拥有一个原生句柄。释放数组的方式是丢弃所有
+    AHK 引用（赋值为 <code>0</code>），并且只在最后一个数组消失之后才调用
+    <code>Numpy.Cleanup()</code>。第&nbsp;10 章会完整讲解生命周期纪律；中间的
+    短示例为了可读性省略了这部分。</p>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="the-basics">
+  <h2><span class="chapter-no">第 02 章</span><a class="anchor" href="#the-basics">基础</a></h2>
+
+  <p>cnumpy 的核心对象是同质多维数组：一张由同一类型元素组成、以非负整数索引的表。
+  和 NumPy 一样，cnumpy 中的维度称为<em>轴</em>（axis）。</p>
+
+  <p>数组类是 <code>Numpy.NdArray</code>，其最重要的属性与 NumPy 一一对应：</p>
+
+  <table>
+    <tr><th>属性</th><th>含义</th></tr>
+    <tr><td><code>Ndim</code></td><td>轴（维度）的数量</td></tr>
+    <tr><td><code>Shape</code></td><td>各维大小组成的 AHK Array（返回的是克隆）</td></tr>
+    <tr><td><code>Size</code></td><td>元素总数</td></tr>
+    <tr><td><code>Dtype</code></td><td>元素类型 id，如 <code>Numpy.DT_FLOAT64</code> = 13</td></tr>
+    <tr><td><code>ItemSize</code></td><td>单个元素的字节数</td></tr>
+    <tr><td><code>Nbytes</code></td><td>元素数据的总字节数</td></tr>
+    <tr><td><code>Strides</code>、<code>CContiguous</code>、<code>FContiguous</code></td><td>内存布局</td></tr>
+  </table>
+
+  <h3 id="an-example"><a class="anchor" href="#an-example">一个例子</a></h3>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">basics_example.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>a := Numpy.Arange(0, 15).Reshape([3, 5])
+
+MsgBox a.ToString()
+MsgBox "shape:    [" a.Shape[1] ", " a.Shape[2] "]`n"
+     . "ndim:     " a.Ndim "`n"
+     . "dtype:    " Numpy.Typename(a.Dtype) "`n"
+     . "itemsize: " a.ItemSize "`n"
+     . "size:     " a.Size</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>[[0, 1, 2, 3, 4],
+ [5, 6, 7, 8, 9],
+ [10, 11, 12, 13, 14]]
+
+shape:    [3, 5]
+ndim:     2
+dtype:    double precision
+itemsize: 8
+size:     15</code></pre></div>
+  </div>
+
+  <p><code>Numpy.Arange</code> 默认产生 <code>float64</code> 元素，因此
+  <code>Numpy.Typename(a.Dtype)</code> 报告原生名称
+  <code>double precision</code>。<code>Shape</code> 返回的是克隆的 AHK Array ——
+  修改它不会改变原生数组的形状。</p>
+
+  <h3 id="array-creation"><a class="anchor" href="#array-creation">创建数组</a></h3>
+
+  <p><code>Numpy.Array</code> 接受一个扁平的 AHK 数值数组，外加可选的行主序形状。
+  数据长度必须恰好等于各维大小之积 —— 不存在静默截断或补齐：</p>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">creation.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>vector  := Numpy.Array([6, 7, 8])              ; 一维 float64，形状 [3]
+matrix  := Numpy.Array([1, 2, 3, 4, 5, 6], [2, 3])
+ints    := Numpy.IntArray([1, 2, 3])           ; int64 元素
+booleans := Numpy.Array([1, 0, 1], [3], Numpy.DT_BOOL)
+
+MsgBox matrix.ToString()
+MsgBox ints.ToString()
+MsgBox booleans.ToString()</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>[[1, 2, 3],
+ [4, 5, 6]]
+[1, 2, 3]
+[True, False, True]</code></pre></div>
+  </div>
+
+  <p>常用的 dtype 常量：</p>
+
+  <table>
+    <tr><th>AHK 常量</th><th>原生 dtype</th></tr>
+    <tr><td><code>Numpy.DT_BOOL</code></td><td>bool</td></tr>
+    <tr><td><code>Numpy.DT_INT32</code></td><td>有符号 32 位整数</td></tr>
+    <tr><td><code>Numpy.DT_LONGLONG</code></td><td>有符号 64 位整数</td></tr>
+    <tr><td><code>Numpy.DT_FLOAT32</code></td><td>32 位浮点数</td></tr>
+    <tr><td><code>Numpy.DT_FLOAT64</code></td><td>64 位浮点数 —— <strong>默认值</strong></td></tr>
+    <tr><td><code>Numpy.DT_COMPLEX128</code></td><td>两个 64 位浮点分量</td></tr>
+  </table>
+
+  <p>很多时候数组的元素未知而大小已知。cnumpy 提供与 NumPy 相同的占位工厂，
+  一律以形状为第一个参数：</p>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">placeholders.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>z := Numpy.Zeros([3, 4])                       ; float64 全零
+o := Numpy.Ones([2, 3], Numpy.DT_INT32)        ; int32 全一
+e := Numpy.Empty([2, 3])                       ; 未初始化
+f := Numpy.Full([2, 2], 3.14)                  ; 常量填充
+
+r := Numpy.Arange(10, 30, 5)                   ; [10, 15, 20, 25]
+x := Numpy.Linspace(0, 2, 9)                   ; 0 到 2 共 9 个点
+
+MsgBox r.ToString()
+MsgBox x.ToString()</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>[10, 15, 20, 25]
+[0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]</code></pre></div>
+  </div>
+
+  <div class="note">
+    <span class="label">与 NumPy 同样的规则</span>
+    <p>当 <code>Arange</code> 需要浮点步长时，优先使用
+    <code>Linspace</code>：它接受元素<em>个数</em>而非步长，因此不受浮点步长
+    累积误差的影响。</p>
+  </div>
+
+  <h3 id="printing-arrays"><a class="anchor" href="#printing-arrays">打印数组</a></h3>
+
+  <p><code>NdArray.ToString()</code> 以嵌套方括号渲染数组：最后一个轴从左到右打印，
+  其余轴以换行分隔，布局与 NumPy 一致。布尔值渲染为
+  <code>True</code>/<code>False</code>，浮点数默认最多 8 位有效数字。</p>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">printing.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>c := Numpy.Arange(0, 24).Reshape([2, 3, 4])    ; 三维数组
+MsgBox c.ToString()
+
+; Array2String 遵循打印选项，可对大数组省略显示：
+previous := Numpy.SetPrintOptions(, 6)          ; threshold := 6
+big := Numpy.Arange(0, 10000)
+MsgBox Numpy.Array2String(big, 4096)
+Numpy.SetPrintOptions(, previous["threshold"])  ; 恢复</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>[[[0, 1, 2, 3],
+  [4, 5, 6, 7],
+  [8, 9, 10, 11]],
+ [[12, 13, 14, 15],
+  [16, 17, 18, 19],
+  [20, 21, 22, 23]]]
+
+[0, 1, 2, ..., 9997, 9998, 9999]</code></pre></div>
+  </div>
+
+  <p><code>ToString()</code> 总是打印全部元素。
+  <code>Numpy.Array2String(source, bufferSize)</code> 会应用通过
+  <code>Numpy.SetPrintOptions(precision, threshold, edgeitems, linewidth,
+  suppress)</code> 设置的打印选项；该方法返回之前的设置以便恢复，省略的参数
+  保持当前值。要把数据取回纯 AHK，<code>ToArray()</code> 返回扁平的 AHK
+  数值 Array。</p>
+
+  <h3 id="basic-operations"><a class="anchor" href="#basic-operations">基本运算</a></h3>
+
+  <p>算术运算<em>逐元素</em>进行并分配新数组。与 NumPy 的一个刻意差异：cnumpy
+  的运算接受<strong>两个 NdArray 操作数</strong> —— AHK 数字不会被自动提升。
+  标量请用 <code>Numpy.Full</code> 包装（或用可广播的单元素数组）：</p>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">operations.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>a := Numpy.Array([20, 30, 40, 50])
+b := Numpy.Arange(0, 4)                        ; [0, 1, 2, 3]
+
+c := Numpy.Subtract(a, b)
+squares := Numpy.Multiply(b, b)
+tenSin := Numpy.Multiply(Numpy.Full([1], 10.0), Numpy.Sin(a))
+mask := Numpy.Less(a, Numpy.Full([1], 35.0))   ; 比较 -> bool 数组
+
+MsgBox c.ToString()
+MsgBox squares.ToString()
+MsgBox tenSin.ToString()
+MsgBox mask.ToString()</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>[20, 29, 38, 47]
+[0, 1, 4, 9]
+[9.1294525, -9.8803162, 7.4511316, -2.6237485]
+[True, True, False, False]</code></pre></div>
+  </div>
+
+  <p>乘法运算符是逐元素的；矩阵乘法用 <code>Matmul</code>（或
+  <code>Dot</code>），既有静态方法也有实例方法：</p>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">matmul.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>A := Numpy.Array([1, 1, 0, 1], [2, 2])
+B := Numpy.Array([2, 0, 3, 4], [2, 2])
+
+elementwise := Numpy.Multiply(A, B)
+product := A.Matmul(B)                          ; 等价于 Numpy.Matmul(A, B)
+
+MsgBox elementwise.ToString()
+MsgBox product.ToString()</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>[[2, 0],
+ [0, 4]]
+[[5, 4],
+ [3, 4]]</code></pre></div>
+  </div>
+
+  <p>归约运算位于数组上。不带轴参数时对全部元素归约并返回
+  <strong>AHK 数字</strong>；带轴参数时返回新数组。<code>-1</code>
+  表示最后一个轴（门面经由 v2 导出路由，因此 <code>axis=None</code>
+  与“最后一个轴”始终有区分）：</p>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">reductions.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>rg := Numpy.Arange(0, 6).Reshape([2, 3])       ; [[0,1,2],[3,4,5]]
+
+total   := rg.Sum()          ; AHK 数字：15.0
+colSums := rg.Sum(0)         ; NdArray，每列一个和
+rowSums := rg.Sum(1)         ; NdArray，每行一个和
+running := rg.Cumsum(1)      ; 沿每行的累积和
+
+MsgBox total "`n" colSums.ToString() "`n" rowSums.ToString()
+MsgBox running.ToString()</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>15.0
+[3, 5, 7]
+[3, 12]
+
+[[0, 1, 3],
+ [3, 7, 12]]</code></pre></div>
+  </div>
+
+  <p>同样的模式覆盖 <code>Min</code>、<code>Max</code>、<code>Mean</code>、
+  <code>Std</code>、<code>Var</code>、<code>Prod</code>、<code>Argmax</code>、
+  <code>Argmin</code>、<code>Any</code>、<code>All</code>、<code>Median</code>、
+  <code>Percentile</code>，以及各自忽略 NaN 的 <code>Nan*</code> 变体。</p>
+
+  <h3 id="universal-functions"><a class="anchor" href="#universal-functions">通用函数</a></h3>
+
+  <p>常见数学函数逐元素运算并产生新数组。它们既是 <code>Numpy.*</code>
+  静态方法，也是 <code>NdArray</code> 实例方法：</p>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">ufuncs.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>b := Numpy.Arange(0, 3)                        ; [0, 1, 2]
+
+MsgBox b.Exp().ToString()
+MsgBox b.Sqrt().ToString()
+
+c := Numpy.Array([2, -1, 4])
+MsgBox Numpy.Add(b, c).ToString()</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>[1, 2.7182818, 7.3890561]
+[0, 1, 1.4142136]
+[2, 0, 6]</code></pre></div>
+  </div>
+
+  <p>可用的函数族包括三角函数（<code>Sin</code>、<code>Cos</code>、
+  <code>Arctan2</code>、<code>Hypot</code>……）、指数与对数（<code>Exp</code>、
+  <code>Log</code>、<code>Log2</code>、<code>Log1p</code>……）、取整
+  （<code>Floor</code>、<code>Ceil</code>、<code>Rint</code>、<code>Trunc</code>、
+  <code>Around</code>）、比较与极值（<code>Maximum</code>、<code>Minimum</code>、
+  <code>Fmax</code>）、逻辑与位运算，以及特殊函数（<code>Erf</code>、
+  <code>Gamma</code>、<code>I0</code>……）。</p>
+
+  <p>支持显式目标数组的运算可以完全避免结果分配 —— 目标的形状、dtype
+  和布局会被校验，绝不会被替换：</p>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">into.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>out := Numpy.Empty([3])
+Numpy.Add(b, c, out)                            ; 写入 out 并返回它
+Numpy.Sqrt(b, out)                              ; Sqrt 同理</code></pre>
+  </div>
+
+  <h3 id="indexing-slicing"><a class="anchor" href="#indexing-slicing">索引、切片与迭代</a></h3>
+
+  <p>cnumpy 中的元素访问是显式的，两套约定值得一次性记牢：</p>
+
+  <ul>
+    <li><code>arr.GetItem(i)</code> / <code>arr.SetItem(i, v)</code> 使用
+    <strong>0 起始的扁平索引</strong>，类似 NumPy 的 <code>arr.item(i)</code>。</li>
+    <li>方括号语法糖 <code>arr[i]</code> 是 <strong>1 起始</strong>的，与
+    AutoHotkey 惯例一致 —— <code>arr[1]</code> 是第一个元素。</li>
+    <li><code>Numpy.ArrayGetItem(arr, [i, j, …])</code> 每个维度取一个 0
+    起始索引（负索引从末尾数起），返回 0 维数组。</li>
+  </ul>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">indexing.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>cubes := Numpy.Power(Numpy.Arange(0, 10), Numpy.Full([1], 3.0))
+MsgBox cubes.ToString()
+
+MsgBox cubes.GetItem(2)      ; 0 起始扁平访问 -> 8.0
+MsgBox cubes[3]              ; 1 起始 AHK 语法糖 -> 8.0
+
+part := Numpy.Slice(cubes, 2, 5)     ; 元素 2..4，相当于 a[2:5]
+MsgBox part.ToString()
+
+everyOther := Numpy.Slice(cubes, 0, 10, 2)  ; 相当于 a[0:10:2]
+MsgBox everyOther.ToString()
+
+reversed := Numpy.Flip(cubes)               ; 相当于 a[::-1]
+MsgBox reversed.ToString()</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>[0, 1, 8, 27, 64, 125, 216, 343, 512, 729]
+8.0
+8.0
+[8, 27, 64]
+[0, 8, 64, 216, 512]
+[729, 512, 343, 216, 125, 64, 27, 8, 1, 0]</code></pre></div>
+  </div>
+
+  <p><code>Numpy.Slice(source, start, stop, step := 1, axis := 0)</code>
+  对<em>单个轴</em>切片并返回<strong>视图</strong> —— 不复制任何元素数据
+  （第 4 章）。多维访问用 <code>ArrayGetItem</code> 取单点、逐轴用
+  <code>Slice</code> 取范围：</p>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">indexing_2d.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>; 用坐标函数构造 5x4 数组：b[x, y] = 10x + y
+b := Numpy.FromFunction((x, y) =&gt; 10 * x + y, [5, 4])
+MsgBox b.ToString()
+
+point := Numpy.ArrayGetItem(b, [2, 3])          ; b[2, 3]
+MsgBox point.ToArray()[1]
+
+lastRow := Numpy.ArrayGetItem(b, [-1, 1])       ; b[-1, 1]
+MsgBox lastRow.ToArray()[1]
+
+rows := Numpy.Slice(b, 1, 3)                    ; b[1:3, :]
+MsgBox rows.ToString()
+
+column := Numpy.Slice(b, 1, 2, 1, 1)            ; b[:, 1:2]
+MsgBox column.ToString()</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>[[0, 1, 2, 3],
+ [10, 11, 12, 13],
+ [20, 21, 22, 23],
+ [30, 31, 32, 33],
+ [40, 41, 42, 43]]
+23.0
+41.0
+[[10, 11, 12, 13],
+ [20, 21, 22, 23]]
+[[1],
+ [11],
+ [21],
+ [31],
+ [41]]</code></pre></div>
+  </div>
+
+  <p>迭代使用普通的 AHK 循环。<code>ToArray()</code> 给出扁平元素；
+  <code>Numpy.Ndenumerate</code> 把每个值与其坐标配对，
+  <code>Numpy.Ndindex</code> 则在没有数组的情况下遍历一个形状：</p>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">iterate.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>small := Numpy.Array([1, 2, 3, 4], [2, 2])
+text := ""
+lines := ""
+
+for value in small.ToArray()
+    text .= value " "
+
+for pair in Numpy.Ndenumerate(small)
+    lines .= "(" pair[1][1] ", " pair[1][2] ") -&gt; " pair[2] "`n"
+
+MsgBox text
+MsgBox lines</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>1.0 2.0 3.0 4.0
+(0, 0) -&gt; 1.0
+(0, 1) -&gt; 2.0
+(1, 0) -&gt; 3.0
+(1, 1) -&gt; 4.0</code></pre></div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="shape-manipulation">
+  <h2><span class="chapter-no">第 03 章</span><a class="anchor" href="#shape-manipulation">形状操作</a></h2>
+
+  <h3 id="changing-shape"><a class="anchor" href="#changing-shape">改变数组的形状</a></h3>
+
+  <p>数组的形状由每个轴上的元素个数决定。可以用多种命令改变形状 ——
+  以下方法全部返回结果<em>而不改动原数组</em>：</p>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">reshape.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>a := Numpy.Array([2, 8, 0, 6, 4, 5, 1, 1, 8, 9, 3, 6], [3, 4])
+
+MsgBox a.Ravel().ToString()          ; 展平（连续时为视图）
+MsgBox a.Reshape([6, 2]).ToString()  ; 新形状（连续时为视图）
+MsgBox a.Transpose().ToString()      ; 转置视图，形状 [4, 3]
+MsgBox a.Flatten().ToString()        ; 展平，总是副本</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>[2, 8, 0, 6, 4, 5, 1, 1, 8, 9, 3, 6]
+[[2, 8],
+ [0, 6],
+ [4, 5],
+ [1, 1],
+ [8, 9],
+ [3, 6]]
+[[2, 4, 8],
+ [8, 5, 9],
+ [0, 1, 3],
+ [6, 1, 6]]
+[2, 8, 0, 6, 4, 5, 1, 1, 8, 9, 3, 6]</code></pre></div>
+  </div>
+
+  <p>与 NumPy 一样，写成 <code>-1</code> 的维度会自动计算：</p>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">reshape_auto.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>MsgBox a.Reshape([2, -1]).ToString()   ; -1 -> 6</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>[[2, 8, 0, 6, 4, 5],
+ [1, 1, 8, 9, 3, 6]]</code></pre></div>
+  </div>
+
+  <p>不兼容的目标形状是真实的原生错误，绝不会静默回退：</p>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">reshape_error.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>source := Numpy.Array([1, 2, 3, 4, 5, 6], [2, 3])
+try
+    invalid := source.Reshape([4, 2])
+catch Error as err
+    MsgBox err.Message</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>NdArray.Reshape failed with status -4:
+Cannot reshape array of size 6 into shape (8 elements)</code></pre></div>
+  </div>
+
+  <h3 id="stacking"><a class="anchor" href="#stacking">堆叠不同的数组</a></h3>
+
+  <p>多个数组可以沿不同的轴堆叠在一起。堆叠函数接受由 NdArray 组成的
+  AHK Array：</p>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">stacking.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>a := Numpy.Array([9, 7, 5, 2], [2, 2])
+b := Numpy.Array([1, 9, 5, 1], [2, 2])
+
+MsgBox Numpy.Vstack([a, b]).ToString()     ; 纵向堆叠 -> [4, 2]
+MsgBox Numpy.Hstack([a, b]).ToString()     ; 横向堆叠 -> [2, 4]
+
+x := Numpy.Array([4.0, 2.0])
+y := Numpy.Array([3.0, 8.0])
+MsgBox Numpy.ColumnStack([x, y]).ToString() ; 一维数组作为列</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>[[9, 7],
+ [5, 2],
+ [1, 9],
+ [5, 1]]
+[[9, 7, 1, 9],
+ [5, 2, 5, 1]]
+[[4, 3],
+ [2, 8]]</code></pre></div>
+  </div>
+
+  <p><code>Numpy.Concatenate(arrays, axis)</code> 是两者的一般化形式，
+  <code>Numpy.Stack(arrays, axis)</code> 沿<em>新</em>轴拼接。此外还有
+  <code>Dstack</code>、<code>RowStack</code> 以及块装配器
+  <code>Numpy.Block</code>。</p>
+
+  <h3 id="splitting"><a class="anchor" href="#splitting">把一个数组拆成几个小数组</a></h3>
+
+  <p><code>Hsplit</code> 沿水平轴拆分：可以传等分数量，也可以传列边界组成的
+  AHK Array。结果是由 NdArray 各部分组成的 AHK Array：</p>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">splitting.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>a := Numpy.Arange(0, 12).Reshape([2, 6])
+MsgBox a.ToString()
+
+parts := Numpy.Hsplit(a, 3)                 ; 三个相等的 [2, 2] 块
+MsgBox parts[1].ToString() "`n---`n" parts[2].ToString()
+
+uneven := Numpy.Hsplit(a, [3, 4])           ; 在第 3、4 列之后拆分
+MsgBox uneven[1].ToString() "`n---`n" uneven[2].ToString()
+     . "`n---`n" uneven[3].ToString()</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>[[0, 1, 2, 3, 4, 5],
+ [6, 7, 8, 9, 10, 11]]
+
+[[0, 1],
+ [6, 7]]
+---
+[[2, 3],
+ [8, 9]]
+
+[[0, 1, 2],
+ [6, 7, 8]]
+---
+[[3],
+ [9]]
+---
+[[4, 5],
+ [10, 11]]</code></pre></div>
+  </div>
+
+  <p><code>Vsplit</code> 沿垂直轴拆分，<code>Split(source, sections,
+  axis)</code> 沿任意给定轴拆分，<code>ArraySplit</code> 则允许不能整除该轴的
+  份数。</p>
+</section>
+
+<!-- ================================================================ -->
+<section id="copies-and-views">
+  <h2><span class="chapter-no">第 04 章</span><a class="anchor" href="#copies-and-views">副本与视图</a></h2>
+
+  <p>对数组进行操作时，元素数据有时会复制到新数组，有时不会。与 NumPy
+  完全一致，共有三种情况：</p>
+
+  <h3>完全不复制</h3>
+
+  <p>普通的 AHK 赋值从不复制 —— 两个名字指向同一个 <code>NdArray</code>
+  对象和同一个原生所有者：</p>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">no_copy.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>a := Numpy.Arange(0, 12).Reshape([3, 4])
+b := a                       ; 同一对象，没有新的原生数组
+MsgBox (b = a)               ; 1（引用相同）</code></pre>
+  </div>
+
+  <h3>视图：看向同一份数据</h3>
+
+  <p><code>View()</code>、<code>Slice</code>、<code>Transpose()</code>，以及在
+  连续数组上的 <code>Reshape</code>/<code>Ravel</code> 都返回视图：新的数组对象
+  <em>共享</em>底层元素缓冲区。<code>Numpy.SharesMemory</code> 可以证明这一点：</p>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">views.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>a := Numpy.Arange(0, 12).Reshape([3, 4])
+
+v := a.View()
+r := a.Reshape([6, 2])            ; 视图：a 是 C 连续的
+t := a.Transpose()                ; 交换步长的视图
+c := a.Copy()                     ; 深副本
+
+MsgBox Numpy.SharesMemory(a, v)   ; 1
+MsgBox Numpy.SharesMemory(a, r)   ; 1
+MsgBox Numpy.SharesMemory(a, t)   ; 1
+MsgBox Numpy.SharesMemory(a, c)   ; 0
+
+; 通过基数组写入，在每个视图中都可见：
+a.SetItem(0, 99)
+MsgBox r.GetItem(0)               ; 99.0</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>1
+1
+1
+0
+99.0</code></pre></div>
+  </div>
+
+  <div class="note">
+    <span class="label">生命周期</span>
+    <p>视图在内部持有其所有者，因此先释放源数组再释放视图是安全的。
+    但为了代码可读，仍建议先释放派生数组、后释放源数组（第&nbsp;10 章）。</p>
+  </div>
+
+  <h3>深副本</h3>
+
+  <p><code>Copy()</code> 完整复制数组及其数据。NumPy 快速入门中的经典习惯 ——
+  复制切片以便释放巨大的中间数组 —— 用法完全相同：</p>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">deep_copy.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>huge := Numpy.Arange(0, 100000000)
+head := Numpy.Slice(huge, 0, 100).Copy()   ; 拥有这 100 个元素
+huge := 0                                  ; 原生缓冲区现在可以释放</code></pre>
+  </div>
+
+  <p><code>Flatten()</code> 和 <code>TransposeCopy()</code> 分别是
+  <code>Ravel()</code> 与 <code>Transpose()</code> 的总是复制版本；
+  <code>AsContiguousArray()</code> 把任何跨步视图物化为 C 连续副本。</p>
+</section>
+
+<!-- ================================================================ -->
+<section id="broadcasting">
+  <h2><span class="chapter-no">第 05 章</span><a class="anchor" href="#broadcasting">广播</a></h2>
+
+  <p>广播让不同形状的数组可以一起运算，遵循合格验证过的 NumPy&nbsp;1.25
+  规则：从尾部轴向前逐一比较形状，两个维度相等或其中之一为 1 时即兼容。</p>
+
+  <figure class="figure">
+    <svg viewBox="0 0 640 190" width="640" height="190" role="img" aria-label="把 1x3 的行广播到 2x3 的矩阵上">
+      <style>
+        .cell { fill: rgba(179,84,30,0.08); stroke: #b3541e; stroke-width: 1.2; }
+        .cellb { fill: rgba(74,124,89,0.10); stroke: #4a7c59; stroke-width: 1.2; }
+        .cellr { fill: rgba(43,38,32,0.05); stroke: #8a7f6b; stroke-width: 1.2; stroke-dasharray: 4 3; }
+        .lbl { font: 13px Georgia, serif; fill: #2b2620; }
+        .mono { font: 11px Consolas, monospace; fill: #8a3d12; }
+        .num { font: 12px Consolas, monospace; fill: #2b2620; }
+      </style>
+      <g transform="translate(20,40)">
+        <rect class="cell" x="0" y="0" width="42" height="34"/><rect class="cell" x="42" y="0" width="42" height="34"/><rect class="cell" x="84" y="0" width="42" height="34"/>
+        <rect class="cell" x="0" y="34" width="42" height="34"/><rect class="cell" x="42" y="34" width="42" height="34"/><rect class="cell" x="84" y="34" width="42" height="34"/>
+        <text class="num" x="15" y="22">1</text><text class="num" x="57" y="22">2</text><text class="num" x="99" y="22">3</text>
+        <text class="num" x="15" y="56">4</text><text class="num" x="57" y="56">5</text><text class="num" x="99" y="56">6</text>
+        <text class="mono" x="0" y="92">形状 [2, 3]</text>
+      </g>
+      <text class="lbl" x="168" y="102" font-size="20">+</text>
+      <g transform="translate(200,40)">
+        <rect class="cellb" x="0" y="0" width="42" height="34"/><rect class="cellb" x="42" y="0" width="42" height="34"/><rect class="cellb" x="84" y="0" width="42" height="34"/>
+        <rect class="cellr" x="0" y="34" width="42" height="34"/><rect class="cellr" x="42" y="34" width="42" height="34"/><rect class="cellr" x="84" y="34" width="42" height="34"/>
+        <text class="num" x="9" y="22">10</text><text class="num" x="51" y="22">20</text><text class="num" x="93" y="22">30</text>
+        <text class="num" x="9" y="56" opacity="0.45">10</text><text class="num" x="51" y="56" opacity="0.45">20</text><text class="num" x="93" y="56" opacity="0.45">30</text>
+        <text class="mono" x="0" y="92">形状 [1, 3] —— 行虚拟重复</text>
+      </g>
+      <text class="lbl" x="352" y="102" font-size="20">=</text>
+      <g transform="translate(384,40)">
+        <rect class="cell" x="0" y="0" width="42" height="34"/><rect class="cell" x="42" y="0" width="42" height="34"/><rect class="cell" x="84" y="0" width="42" height="34"/>
+        <rect class="cell" x="0" y="34" width="42" height="34"/><rect class="cell" x="42" y="34" width="42" height="34"/><rect class="cell" x="84" y="34" width="42" height="34"/>
+        <text class="num" x="9" y="22">11</text><text class="num" x="51" y="22">22</text><text class="num" x="93" y="22">33</text>
+        <text class="num" x="9" y="56">14</text><text class="num" x="51" y="56">25</text><text class="num" x="93" y="56">36</text>
+        <text class="mono" x="0" y="92">形状 [2, 3]</text>
+      </g>
+    </svg>
+    <figcaption>[1, 3] 的行沿第 0 轴虚拟重复 —— 不产生任何复制。</figcaption>
+  </figure>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">broadcasting.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>source  := Numpy.Array([1, 2, 3, 4, 5, 6], [2, 3])
+offsets := Numpy.Array([10, 20, 30], [1, 3])
+
+shifted := Numpy.Add(source, offsets)
+MsgBox shifted.ToString()
+
+; 单元素数组可以对任何形状广播 —— 这就是标量的写法：
+doubled := Numpy.Multiply(source, Numpy.Full([1], 2.0))
+MsgBox doubled.ToString()
+
+; 先问再算：
+MsgBox Numpy.CanBroadcast(source, offsets)          ; 1
+resultShape := Numpy.BroadcastShapes([[3, 1], [1, 4]])
+MsgBox "[" resultShape[1] ", " resultShape[2] "]"   ; [3, 4]</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>[[11, 22, 33],
+ [14, 25, 36]]
+
+[[2, 4, 6],
+ [8, 10, 12]]
+
+1
+[3, 4]</code></pre></div>
+  </div>
+
+  <p><code>Numpy.BroadcastTo(source, shape)</code> 显式物化广播视图，
+  <code>Numpy.BroadcastArrays</code> 则把一整组数组互相扩展。</p>
+</section>
+
+<!-- ================================================================ -->
+<section id="advanced-indexing">
+  <h2><span class="chapter-no">第 06 章</span><a class="anchor" href="#advanced-indexing">高级索引与索引技巧</a></h2>
+
+  <p>cnumpy 提供 NumPy 的整套花式索引工具；选择器是显式的函数而非方括号语法。</p>
+
+  <h3>用索引数组索引</h3>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">take.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>squares := Numpy.Multiply(Numpy.Arange(0, 12), Numpy.Arange(0, 12))
+MsgBox squares.ToString()
+
+picked := Numpy.Take(squares, [1, 1, 3, 8, 5])   ; 索引可以重复
+MsgBox picked.ToString()</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>[0, 1, 4, 9, 16, 25, 36, 49, 64, 81, 100, 121]
+[1, 1, 9, 64, 25]</code></pre></div>
+  </div>
+
+  <p><code>Take</code> 接受普通的 AHK Array、整数或 <code>NdArray</code>
+  索引；带 <code>axis</code> 参数时沿该轴选取。<code>Numpy.FancyIndex(source,
+  indices, axis)</code> 是跨步版本，<code>Numpy.Put(destination, indices,
+  values)</code> 则是写入方向的对应操作。</p>
+
+  <h3>用布尔数组索引</h3>
+
+  <p>比较运算产生 <code>DT_BOOL</code> 数组，配合 <code>BooleanIndex</code>
+  选取元素。非布尔掩码会被真实错误拒绝 —— 请用比较运算构造掩码：</p>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">boolean_mask.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>a := Numpy.Arange(0, 12).Reshape([3, 4])
+mask := Numpy.Greater(a, Numpy.Full([1], 4.0))   ; bool 数组
+
+MsgBox mask.ToString()
+MsgBox Numpy.BooleanIndex(a, mask).ToString()    ; 一维选取结果</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>[[False, False, False, False],
+ [False, True, True, True],
+ [True, True, True, True]]
+[5, 6, 7, 8, 9, 10, 11]</code></pre></div>
+  </div>
+
+  <h3>Where 家族</h3>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">where.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>; 两分支选择：where(condition, x, y)
+x := Numpy.Arange(0, 6)
+isBig := Numpy.GreaterEqual(x, Numpy.Full([1], 3.0))
+capped := Numpy.Where(isBig, Numpy.Full([6], 3.0), x)
+MsgBox capped.ToString()
+
+; 非零元素的坐标：每个维度一个索引数组
+grid := Numpy.Array([1, 0, 0, 0, 2, 0], [2, 3])
+locations := Numpy.Where(Numpy.NotEqual(grid, Numpy.Zeros([1])))
+MsgBox locations[1].ToString() "  " locations[2].ToString()</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>[0, 1, 2, 3, 3, 3]
+[0, 1]  [0, 1]</code></pre></div>
+  </div>
+
+  <p>相关工具还有 <code>ArgWhere</code>（坐标按行排列）、
+  <code>FlatNonzero</code>、<code>CountNonzero</code>、<code>Extract</code>、
+  <code>Compress</code>，以及多条件选择的 <code>Select</code>。</p>
+
+  <h3>搜索与排序</h3>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">sorting.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>source := Numpy.IntArray([3, 1, 2, 2, 5, 4], [2, 3])
+
+MsgBox source.Sort(-1, "stable").ToString()      ; 逐行排序
+MsgBox source.Sort("none", "stable").ToString()  ; 展平后排序
+MsgBox source.Argsort(-1, "heapsort").ToString() ; 排序索引
+
+parts := Numpy.Unique(source, true, true, true)
+MsgBox parts[1].ToString()                       ; 唯一值</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>[[1, 2, 3],
+ [2, 4, 5]]
+[1, 2, 2, 3, 4, 5]
+[[1, 2, 0],
+ [0, 2, 1]]
+[1, 2, 3, 4, 5]</code></pre></div>
+  </div>
+
+  <p><code>Unique</code> 可选返回首次出现的索引、逆映射和计数。集合运算
+  （<code>Intersect1d</code>、<code>Union1d</code>、<code>Setdiff1d</code>、
+  <code>In1d</code>/<code>Isin</code>）与搜索组合
+  （<code>Searchsorted</code>、<code>Digitize</code>）补全了这一族。</p>
+</section>
+
+<!-- ================================================================ -->
+<section id="linear-algebra">
+  <h2><span class="chapter-no">第 07 章</span><a class="anchor" href="#linear-algebra">线性代数</a></h2>
+
+  <p>核心线性代数接口遵循 <code>numpy.linalg</code>。简单的数组操作在数组
+  实例上；求解器与分解在 <code>Numpy</code> 和 <code>Numpy.Linalg</code> 上：</p>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">linalg.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>a := Numpy.Array([1.0, 2.0, 3.0, 4.0], [2, 2])
+
+MsgBox a.Transpose().ToString()
+MsgBox Numpy.Linalg.Inv(a).ToString()
+
+eye := Numpy.Eye(2)                       ; 2x2 单位矩阵
+MsgBox Numpy.TraceExt(eye)                ; 2.0（AHK 数字）
+
+det := a.Det()                            ; 单元素 NdArray
+MsgBox det.GetItem(0)                     ; -2.0000000000000004（LU 舍入，
+                                          ; 与 np.linalg.det 一致）
+
+; 求解 a @ x = y
+y := Numpy.Array([5.0, 7.0], [2, 1])
+x := Numpy.Solve(a, y)
+MsgBox x.ToString()</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>[[1, 3],
+ [2, 4]]
+[[-2, 1],
+ [1.5, -0.5]]
+2.0
+-2.0000000000000004
+[[-3],
+ [4]]</code></pre></div>
+  </div>
+
+  <p>分解操作把天然的多个结果作为数组的 AHK Array 返回：
+  <code>Numpy.Eig(a)</code> 给出 <code>[特征值, 特征向量]</code>，
+  <code>Numpy.Svd(a)</code> 给出 <code>[U, S, Vh]</code>，
+  <code>Numpy.Lstsq(a, b)</code> 给出
+  <code>[x, 残差, 秩, 奇异值]</code>。另外还有
+  <code>Cholesky</code>、<code>Eigh</code>/<code>Eigvalsh</code>、
+  <code>Pinv</code>、<code>MatrixPower</code>、<code>MatrixRank</code>、
+  <code>Norm</code>、<code>Cond</code>、<code>Kron</code>、
+  <code>Tensordot</code>，以及 <code>Einsum*</code> 固定模式。</p>
+
+  <div class="note">
+    <span class="label">性能</span>
+    <p><code>Numpy.SetNumThreads(n)</code> 配置 GEMM 线程池
+    （<code>0</code> 恢复自动线程数）。大规模
+    <code>Dot</code>/<code>Matmul</code> 调用最能从中获益。</p>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="random-numbers">
+  <h2><span class="chapter-no">第 08 章</span><a class="anchor" href="#random-numbers">随机数</a></h2>
+
+  <p><code>Numpy.Random</code> 按常见分布生成数组。注意与 NumPy 的签名差异：
+  <strong>形状在前</strong>，分布参数在后：</p>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">random.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>Numpy.Random.Seed(42)                       ; 确定性序列
+
+u := Numpy.Random.Random([2, 3])            ; 均匀分布 [0, 1)
+n := Numpy.Random.Normal([1000], 2.0, 0.5)  ; 均值 2.0，标准差 0.5
+i := Numpy.Random.Randint([5], 0, 10)       ; [0, 10) 内的整数
+
+MsgBox "u shape: [" u.Shape[1] ", " u.Shape[2] "]"
+MsgBox "样本均值: " Format("{:.2f}", n.Mean())
+
+deck := Numpy.Arange(0, 10)
+shuffled := Numpy.Random.Permutation(deck)  ; 新的重排数组
+Numpy.Random.Shuffle(deck)                  ; 就地打乱
+
+choice := Numpy.Random.Choice(deck, 3, false)  ; 抽 3 个，不放回</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>u shape: [2, 3]
+样本均值: 2.00   （近似值；随生成器而定）</code></pre></div>
+  </div>
+
+  <div class="warn-box">
+    <span class="label">兼容性边界</span>
+    <p>生成器采用已鉴定的 xoshiro256** / SplitMix64 序列，<em>不是</em>
+    NumPy 的位生成器。分布语义经过合格验证，但同一种子不会逐元素复现 NumPy
+    的随机流。<code>Choice</code> 支持带概率数组的加权抽样，并校验权重
+    构成合法的概率分布。</p>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="callbacks">
+  <h2><span class="chapter-no">第 09 章</span><a class="anchor" href="#callbacks">回调与向量化</a></h2>
+
+  <p>NumPy 传递 Python 可调用对象的地方，cnumpy 通过批量回调 ABI 把 AHK
+  函数送过原生边界。回调值是真实的 <code>double</code> 标量；回调内部抛出的
+  异常会原子地中止操作，并重新抛回你的脚本。</p>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">callbacks.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>; 从坐标构造（0 起始），类似 np.fromfunction：
+grid := Numpy.FromFunction((x, y) =&gt; 10 * x + y, [2, 3])
+MsgBox grid.ToString()
+
+; 逐元素应用标量函数，类似 np.vectorize：
+source := Numpy.Array([1.0, 2.0, 3.0])
+tripled := Numpy.Vectorize(value =&gt; value * 2 + 1, source)
+MsgBox tripled.ToString()
+
+; 沿某个轴把每条线归约为一个标量：
+SumLine(values) {
+    total := 0.0
+    for value in values
+        total += value
+    return total
+}
+m := Numpy.Array([1, 2, 3, 4, 5, 6], [2, 3])
+columnTotals := Numpy.ApplyAlongAxis(SumLine, 0, m)
+MsgBox columnTotals.ToString()
+
+; 从迭代器拉取值，类似 np.fromiter：
+MakeCounter() {
+    i := 0
+    return (*) =&gt; (i += 1, i * i)
+}
+squares := Numpy.FromIter(MakeCounter(), 5)
+MsgBox squares.ToString()</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>[[0, 1, 2],
+ [10, 11, 12]]
+[3, 5, 7]
+[5, 7, 9]
+[1, 4, 9, 16, 25]</code></pre></div>
+  </div>
+
+  <div class="warn-box">
+    <span class="label">性能事实</span>
+    <p>回调批量化的是<em>边界穿越</em>，而不是标量计算本身：每个元素仍要执行
+    一次 AHK 函数调用。合格基准中回调密集型操作（如
+    <code>FromFunction</code>）的比值远高于原生内核。凡是存在内置数组操作的
+    地方都应优先使用；只有当逻辑确实无法用其他方式表达时才使用回调。</p>
+  </div>
+
+  <p>用一个统计常客收尾 —— <code>Histogram</code> 返回 int64 的分箱计数
+  （两个端点相等时自动检测范围）：</p>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">histogram.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>Numpy.Random.Seed(7)
+data := Numpy.Random.Normal([10000], 2.0, 0.5)
+counts := Numpy.Histogram(data, 10)
+MsgBox counts.ToString()                ; 覆盖样本范围的 10 个箱
+MsgBox counts.Sum()                     ; 10000.0</code></pre>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="ownership">
+  <h2><span class="chapter-no">第 10 章</span><a class="anchor" href="#ownership">所有权与清理</a></h2>
+
+  <p>这是唯一没有 NumPy 对应物的一章，也是长期运行的 AutoHotkey 进程里
+  最重要的一章。每个 <code>NdArray</code> 都拥有一个原生句柄；当最后一个
+  AHK 引用消失时，其析构器释放原生引用。守规矩脚本的纪律：</p>
+
+  <ol>
+    <li><code>Init()</code> 之后用 <code>Numpy.AllocatedMemory()</code>
+    取一条基线。</li>
+    <li>在 <code>try</code> 中完成工作；退出路径上把每个数组引用赋值为
+    <code>0</code>，派生数组在前。</li>
+    <li><strong>最后</strong>才调用 <code>Numpy.Cleanup()</code>，绝不在数组
+    或回调结果存活时调用。</li>
+    <li>断言保留字节数回到了基线。</li>
+  </ol>
+
+  <div class="codepanel">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="fname">lifecycle.ahk</span><span class="tag">AutoHotkey v2</span></div>
+    <pre data-lang="ahk"><code>#Requires AutoHotkey v2.0
+#Include ahk\numpy.ahk
+
+Numpy.DllPath := A_ScriptDir "\build\x64\Release\cnumpy_ahk.dll"
+Numpy.Init()
+baseline := Numpy.AllocatedMemory()
+
+source := 0
+result := 0
+try {
+    source := Numpy.Arange(0, 1024)
+    result := Numpy.Sqrt(source)
+    MsgBox "平方根均值: " Format("{:.2f}", result.Mean())
+} finally {
+    result := 0                       ; 派生数组在前
+    source := 0
+    retained := Numpy.AllocatedMemory()
+    Numpy.Cleanup()                   ; 总是最后
+}
+
+if retained != baseline
+    throw Error("retained native bytes: " (retained - baseline))</code></pre>
+    <div class="out"><span class="out-label">输出</span><pre><code>平方根均值: 21.32
+（脚本以零保留字节退出）</code></pre></div>
+  </div>
+
+  <p><code>AllocatedMemory()</code> 是库跟踪的原生分配总量 —— 它是生命周期
+  断言，不是 Windows 进程工作集。原生失败以携带原生状态码与消息的 AHK
+  异常浮出水面，绝不会被转换成空数组或替代结果。常见症状：</p>
+
+  <table>
+    <tr><th>症状</th><th>含义与处置</th></tr>
+    <tr><td>加载时 <code>GetLastError 193</code></td><td>架构不匹配 —— 用 64 位 AutoHotkey 搭配 x64 DLL。</td></tr>
+    <tr><td>加载时 <code>GetLastError 126</code></td><td>路径或原生依赖缺失 —— 核对绝对的 <code>Numpy.DllPath</code>。</td></tr>
+    <tr><td><code>missing native export …</code></td><td>包装器与 DLL 来自不同的构建 —— 一起部署它们。</td></tr>
+    <tr><td><code>failed with status -4</code></td><td>形状契约失败 —— 完整阅读原生消息。</td></tr>
+    <tr><td><code>failed with status -6</code></td><td>轴对该数组秩或投影 API 无效。</td></tr>
+    <tr><td>保留字节非零</td><td>还有所有者、视图、结果或回调上下文存活 —— 释放具体引用后重新断言。</td></tr>
+  </table>
+
+  <div class="divider">教程完</div>
+
+  <h3>延伸阅读</h3>
+  <ul>
+    <li><a href="https://github.com/MonoEven/cnumpy/blob/master/docs/getting-started.md">AutoHotkey v2 中的 cnumpy 入门</a> —— 第 1–2 章与第 10 章的散文式姊妹篇</li>
+    <li><a href="https://github.com/MonoEven/cnumpy/blob/master/examples/README.md">实用的完整示例</a> —— CSV 销售分析、最小二乘回归、信号平滑、预分配 C 管线</li>
+    <li><a href="https://github.com/MonoEven/cnumpy/blob/master/docs/guides/bulk-callbacks.md">来自 AutoHotkey 与 C 的批量回调</a> —— 第 9 章背后的完整回调 ABI</li>
+    <li><a href="https://github.com/MonoEven/cnumpy/blob/master/docs/compatibility/numpy-1.25.md">NumPy 1.25 兼容性声明</a> —— 每一处有意为之的差异，均经验证与测试</li>
+    <li><a href="https://github.com/MonoEven/cnumpy">仓库 README</a> —— 构建、测试与基准说明</li>
+  </ul>
+</section>
+
+</article>
+</div>
+
+<footer class="colophon">
+  <p>cnumpy <code>1.21.0-cnumpy</code> · 在 Windows x64 上对标 NumPy 1.25.0 验证 ·
+  MIT 许可证 © 2026 MonoEven</p>
+  <p>本教程的结构对应
+  <a href="https://numpy.org/doc/1.25/user/quickstart.html">NumPy 1.25 Quickstart</a>。
+  <a href="index.html" lang="en">English version</a></p>
+</footer>
+
+<script src="assets/tutorial.js"></script>
+</body>
+</html>

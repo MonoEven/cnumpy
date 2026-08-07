@@ -1,0 +1,529 @@
+/* =========================================================================
+   cnumpy quickstart tutorial — shared stylesheet
+   Aesthetic: engineer's field manual. Warm paper, ink serifs, dark
+   terminal code panels, hairline rules. No external dependencies.
+   ========================================================================= */
+
+:root {
+  --paper: #f6f2e9;
+  --paper-deep: #efe9db;
+  --grid-line: rgba(112, 98, 72, 0.07);
+  --ink: #2b2620;
+  --ink-soft: #5c5344;
+  --ink-faint: #8a7f6b;
+  --rule: #d8cfba;
+  --accent: #b3541e;         /* burnt sienna */
+  --accent-deep: #8a3d12;
+  --seal: #9c2b1f;           /* stamp red */
+  --code-bg: #23201a;
+  --code-edge: #3a3527;
+  --code-text: #e8e0cd;
+  --code-comment: #857c66;
+  --code-kw: #d9a05b;
+  --code-str: #a3be7c;
+  --code-num: #7fb4c9;
+  --code-fn: #e8c66f;
+  --code-out: #9fb8a4;
+  --ok: #4a7c59;
+  --warn: #a8552a;
+  --toc-w: 15.5rem;
+  --content-w: 46rem;
+  font-size: 16px;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 28px 28px;
+  font-family: Georgia, "Times New Roman", "Songti SC", "SimSun", serif;
+  line-height: 1.72;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: rgba(179, 84, 30, 0.22); }
+
+/* ---------- masthead ---------- */
+
+.masthead {
+  border-bottom: 3px double var(--rule);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0) 70%),
+    var(--paper-deep);
+  padding: 0 1.5rem;
+}
+
+.masthead-inner {
+  max-width: calc(var(--toc-w) + var(--content-w) + 5rem);
+  margin: 0 auto;
+  padding: 2.8rem 0 2.2rem;
+  position: relative;
+}
+
+.masthead .kicker {
+  font-family: "Consolas", "Cascadia Mono", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--accent-deep);
+  margin: 0 0 0.9rem;
+}
+
+.masthead h1 {
+  font-size: clamp(2.2rem, 5.5vw, 3.6rem);
+  line-height: 1.08;
+  margin: 0 0 1rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.masthead h1 .thin { font-weight: 400; font-style: italic; color: var(--ink-soft); }
+
+.masthead .deck {
+  max-width: 38rem;
+  font-size: 1.06rem;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.stamp {
+  position: absolute;
+  right: 0;
+  top: 2.6rem;
+  border: 2px solid var(--seal);
+  color: var(--seal);
+  font-family: "Consolas", "Cascadia Mono", monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.5rem 0.8rem;
+  transform: rotate(4deg);
+  border-radius: 2px;
+  opacity: 0.82;
+  text-align: center;
+  line-height: 1.5;
+  background: rgba(246, 242, 233, 0.6);
+}
+
+.lang-switch {
+  position: absolute;
+  right: 0;
+  bottom: -1rem;
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  overflow: hidden;
+  font-family: "Consolas", "Cascadia Mono", monospace;
+  font-size: 0.78rem;
+  background: var(--paper);
+  box-shadow: 0 2px 6px rgba(43, 38, 32, 0.08);
+}
+
+.lang-switch a, .lang-switch span {
+  padding: 0.42rem 0.95rem;
+  text-decoration: none;
+  color: var(--ink-soft);
+}
+
+.lang-switch span {
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 700;
+}
+
+.lang-switch a:hover { background: var(--paper-deep); color: var(--ink); }
+
+/* ---------- layout ---------- */
+
+.page {
+  max-width: calc(var(--toc-w) + var(--content-w) + 5rem);
+  margin: 0 auto;
+  padding: 3rem 1.5rem 6rem;
+  display: grid;
+  grid-template-columns: var(--toc-w) minmax(0, 1fr);
+  gap: 3.5rem;
+  align-items: start;
+}
+
+/* ---------- table of contents ---------- */
+
+nav.toc {
+  position: sticky;
+  top: 1.6rem;
+  font-size: 0.86rem;
+  border-left: 2px solid var(--rule);
+  padding-left: 1.1rem;
+  max-height: calc(100vh - 3.2rem);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+nav.toc .toc-title {
+  font-family: "Consolas", "Cascadia Mono", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 0.9rem;
+}
+
+nav.toc ol {
+  list-style: none;
+  counter-reset: chapter;
+  margin: 0;
+  padding: 0;
+}
+
+nav.toc > ol > li { counter-increment: chapter; margin-bottom: 0.32rem; }
+
+nav.toc > ol > li > a::before {
+  content: counter(chapter, decimal-leading-zero);
+  font-family: "Consolas", "Cascadia Mono", monospace;
+  font-size: 0.68rem;
+  color: var(--ink-faint);
+  margin-right: 0.55rem;
+}
+
+nav.toc a {
+  color: var(--ink-soft);
+  text-decoration: none;
+  display: block;
+  padding: 0.14rem 0.4rem 0.14rem 0;
+  border-radius: 2px;
+  transition: color 0.15s ease;
+}
+
+nav.toc a:hover { color: var(--accent-deep); }
+
+nav.toc ol ol { padding-left: 1.35rem; margin: 0.1rem 0 0.35rem; }
+
+nav.toc ol ol a { font-size: 0.8rem; color: var(--ink-faint); }
+
+nav.toc a.active {
+  color: var(--accent-deep);
+  font-weight: 700;
+}
+
+nav.toc a.active::after {
+  content: "◀";
+  font-size: 0.55rem;
+  margin-left: 0.4rem;
+  vertical-align: 1px;
+}
+
+/* ---------- article ---------- */
+
+article { min-width: 0; }
+
+article > section { margin-bottom: 4.2rem; }
+
+h2 {
+  font-size: 1.85rem;
+  line-height: 1.2;
+  margin: 0 0 1.1rem;
+  padding-top: 0.4rem;
+  letter-spacing: -0.01em;
+  position: relative;
+}
+
+h2 .chapter-no {
+  display: block;
+  font-family: "Consolas", "Cascadia Mono", monospace;
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.3em;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+}
+
+h2::after {
+  content: "";
+  display: block;
+  width: 3.2rem;
+  height: 3px;
+  background: var(--accent);
+  margin-top: 0.7rem;
+}
+
+h3 {
+  font-size: 1.22rem;
+  margin: 2.4rem 0 0.7rem;
+  letter-spacing: -0.005em;
+}
+
+h2 a.anchor, h3 a.anchor {
+  color: inherit;
+  text-decoration: none;
+}
+
+h2 a.anchor:hover::after, h3 a.anchor:hover::after {
+  content: " #";
+  color: var(--accent);
+  font-weight: 400;
+}
+
+p { margin: 0 0 1.05rem; }
+
+article a { color: var(--accent-deep); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+article a:hover { color: var(--accent); }
+
+code {
+  font-family: "Consolas", "Cascadia Mono", "Courier New", monospace;
+  font-size: 0.86em;
+  background: rgba(112, 98, 72, 0.12);
+  border-radius: 3px;
+  padding: 0.08em 0.35em;
+  color: var(--accent-deep);
+}
+
+strong { color: var(--ink); }
+
+ul, ol { margin: 0 0 1.05rem; padding-left: 1.4rem; }
+li { margin-bottom: 0.3rem; }
+
+/* ---------- callouts ---------- */
+
+.note, .warn-box {
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--ok);
+  background: rgba(74, 124, 89, 0.06);
+  border-radius: 3px;
+  padding: 0.85rem 1.1rem;
+  margin: 1.3rem 0;
+  font-size: 0.95rem;
+}
+
+.warn-box {
+  border-left-color: var(--warn);
+  background: rgba(168, 85, 42, 0.07);
+}
+
+.note .label, .warn-box .label {
+  font-family: "Consolas", "Cascadia Mono", monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--ok);
+}
+
+.warn-box .label { color: var(--warn); }
+
+.note p:last-child, .warn-box p:last-child { margin-bottom: 0; }
+
+/* ---------- code panels ---------- */
+
+.codepanel {
+  margin: 1.4rem 0 1.7rem;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--code-edge);
+  box-shadow: 0 10px 28px -14px rgba(43, 38, 32, 0.55);
+}
+
+.codepanel .bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background-color: #2e2a22;
+  border-bottom: 1px solid var(--code-edge);
+  padding: 0.45rem 0.9rem;
+}
+
+.codepanel .dots { display: flex; gap: 0.32rem; }
+.codepanel .dots i {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #57503e; display: block;
+}
+.codepanel .dots i:first-child { background: #8a5a3c; }
+
+.codepanel .bar .fname {
+  font-family: "Consolas", "Cascadia Mono", monospace;
+  font-size: 0.72rem;
+  color: #a89c82;
+  letter-spacing: 0.06em;
+}
+
+.codepanel .bar .tag {
+  margin-left: auto;
+  font-family: "Consolas", "Cascadia Mono", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #6f6753;
+  border: 1px solid #4a4434;
+  padding: 0.14rem 0.5rem;
+  border-radius: 2px;
+}
+
+.codepanel pre {
+  margin: 0;
+  padding: 1.05rem 1.2rem;
+  background: var(--code-bg);
+  color: var(--code-text);
+  overflow-x: auto;
+  font-family: "Consolas", "Cascadia Mono", "Courier New", monospace;
+  font-size: 0.84rem;
+  line-height: 1.62;
+  tab-size: 4;
+}
+
+.codepanel pre code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  color: inherit;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.codepanel pre::-webkit-scrollbar { height: 8px; }
+.codepanel pre::-webkit-scrollbar-thumb { background: #4a4434; border-radius: 4px; }
+
+/* output block attached under a code panel */
+.codepanel .out {
+  border-top: 1px dashed #4a4434;
+  background: #1d1b15;
+  padding: 0.8rem 1.2rem 0.9rem;
+}
+
+.codepanel .out .out-label {
+  font-family: "Consolas", "Cascadia Mono", monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #6f6753;
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+.codepanel .out pre {
+  padding: 0;
+  background: transparent;
+  color: var(--code-out);
+  font-size: 0.82rem;
+}
+
+/* syntax token colors */
+.tok-c { color: var(--code-comment); font-style: italic; }
+.tok-k { color: var(--code-kw); }
+.tok-s { color: var(--code-str); }
+.tok-n { color: var(--code-num); }
+.tok-f { color: var(--code-fn); }
+.tok-cls { color: #c9a2d8; }
+.tok-op { color: #b8ad93; }
+
+/* ---------- tables ---------- */
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.3rem 0 1.7rem;
+  font-size: 0.92rem;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+th, td {
+  border: 1px solid var(--rule);
+  padding: 0.5rem 0.8rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: var(--paper-deep);
+  font-family: "Consolas", "Cascadia Mono", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+td code { white-space: nowrap; }
+
+/* ---------- shape diagram figures ---------- */
+
+.figure {
+  border: 1px solid var(--rule);
+  background: rgba(255,255,255,0.5);
+  border-radius: 4px;
+  padding: 1.2rem 1.3rem 1rem;
+  margin: 1.4rem 0 1.7rem;
+  overflow-x: auto;
+}
+
+.figure figcaption {
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+  font-style: italic;
+  margin-top: 0.7rem;
+}
+
+.figure svg { display: block; max-width: 100%; }
+
+/* ---------- chapter divider ---------- */
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: var(--ink-faint);
+  margin: 3.4rem 0;
+  font-size: 0.8rem;
+  font-family: "Consolas", "Cascadia Mono", monospace;
+  letter-spacing: 0.3em;
+}
+
+.divider::before, .divider::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--rule);
+}
+
+/* ---------- footer ---------- */
+
+footer.colophon {
+  border-top: 3px double var(--rule);
+  margin-top: 2rem;
+  padding: 2rem 1.5rem 3rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--ink-faint);
+}
+
+footer.colophon a { color: var(--accent-deep); }
+
+/* ---------- print header link back ---------- */
+
+.backline {
+  font-family: "Consolas", "Cascadia Mono", monospace;
+  font-size: 0.74rem;
+  margin-bottom: 1.4rem;
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 900px) {
+  .page { grid-template-columns: 1fr; gap: 1.5rem; }
+  nav.toc {
+    position: static;
+    border-left: none;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 1rem 1.2rem;
+    max-height: none;
+    background: rgba(255,255,255,0.5);
+  }
+  .stamp { display: none; }
+  .lang-switch { position: static; margin-top: 1.4rem; display: inline-flex; }
+}
